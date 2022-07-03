@@ -1,0 +1,26 @@
+---
+# tasks file for logrotate
+- name: copy logroate configuration file
+  copy: src=logrotate.conf dest=/etc/logrotate.d/docker
+  tags:
+  - copyfile
+  become: yes
+- name: Get running containers
+  docker_host_info:
+    containers: yes
+  register: docker_info
+- name: Stop running containers
+  docker_container:
+    name: "nginx"
+    state: stopped
+- name: redeploy nginx docker container
+  docker_container:
+    image: nginx:stable
+    name: nginx
+    state: started
+    auto_remove: true
+    ports:
+      - "{{nginx_container_port}}:80"
+    volumes:
+      - /etc/logrotate.d/docker:/etc/logrotate.d/docker
+  become: yes
